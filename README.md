@@ -1,1 +1,3 @@
-![Описание](B-zierLine/pic.png)
+![][test1]
+ 
+[test1]: pic.png
