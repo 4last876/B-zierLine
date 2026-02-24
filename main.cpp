@@ -19,17 +19,29 @@ int y = 0;
 bool operator== (const figure& other){
   return other.x == x && other.y == y;
 }
+
+virtual bool contains(int x_, int y_) = 0;
+
 virtual ~figure(){}
 };
 
 struct point : public figure{
   point(int x_, int y_) : figure(x_,y_){}
+
+virtual bool contains(int x_, int y_) override{
+return 0;
+}
 };
 
-struct rect : public point{
-  rect(int x_,int y_,int w_,int h_) : point(x_,y_),w(w_),h(h_){}
+struct rect : public figure{
+  rect(int x_,int y_,int w_,int h_) : figure(x_,y_), pt(x_,y_),w(w_),h(h_){}
+point pt;
 int w = 0;
 int h = 0;
+
+virtual bool contains(int x_, int y_) override{
+return ((x + w) > x_ && (y + h) > y_) && ((x > x_) && (y > y_));
+}
 };
 
 struct line : public figure{
@@ -37,11 +49,18 @@ struct line : public figure{
 point* p1;
 point* p2;
 
+virtual bool contains(int x_, int y_) override{
+return 0;
+}
 };
 
 struct bezierLine : public figure{
 std::vector<point*> points;
 bezierLine(point* p1_, point* p2_, point* p3_) : figure{0,0}, points{p1_,p2_,p3_} {}
+
+virtual bool contains(int x_, int y_) override{
+return 0;
+}
 };
 
 //VIEW
@@ -139,7 +158,6 @@ renderer.reset(SDL_CreateRenderer(win.get(),-1,SDL_RENDERER_ACCELERATED),Deleter
 }
 };
 
-
 class updateFigure : public Isubcride {
     std::vector<SDL_Event> events;
     bool dragging = false;
@@ -175,8 +193,13 @@ public:
 
             else if (e.type == SDL_MOUSEMOTION) {
                 if (dragging && selected != nullptr) {
-                    selected->x = e.motion.x - offsetX;
-                    selected->y = e.motion.y - offsetY;
+                    int x = e.motion.x - offsetX;
+                    int y = e.motion.y - offsetY;
+
+                    selected->x = x;
+                    selected->y = y;
+                    selected->pt.x = x;
+                    selected->pt.y = y;
                 }
             }
 
@@ -189,8 +212,6 @@ public:
         events.clear();
     }
 };
-
-
 
 //CONTROLLER
 class ModelManager{
@@ -276,7 +297,7 @@ void run(){
   rect rt1(100,100,10,10);
   rect rt2(100,300,10,10);
   rect rt3(100,400,10,10);
-bezierLine li{&rt1,&rt2,&rt3};
+bezierLine li{&rt1.pt,&rt2.pt,&rt3.pt};
 model.addData(&rt1);
 model.addData(&rt2);
 model.addData(&rt3);
